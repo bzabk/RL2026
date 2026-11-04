@@ -1,42 +1,40 @@
+import numpy as np
+
 class PaperSoccerEnv:
-
-
     def __init__(self,x_length = 8,y_length=10,gate_size: int =2):
 
         assert x_length % 2==0 and y_length % 2==0 and gate_size%2==0, "error"
         assert gate_size<y_length, "error"
 
+
+        self.grid = np.zeros((y_length+3,x_length+1,9),dtype=np.int8)
+
+        # channels 0-7 represent actions
+        # 8: is boundary
+
         self.x_length = x_length
         self.y_length = y_length
         self.gate_size = gate_size
-        self.cur_pos = [0,0] # starting pos
+        self.cur_pos = [(y_length+3)//2,(x_length+1)//2] # starting pos
 
-        self.used_paths = set()
-        self.cur_player = -1 # -1(down) or 1(up)
+        self._create_boundaries()
 
-        self.terminal_states = {-1:set(),1:set()}
-        self.bouncing_places = set()
 
-    def _create_edge(self,cur_pos,decision):
-
+    def _grid_overview(self):
+        print(self.grid[:,:,8])
 
     def _create_boundaries(self):
-        left_down_corner = (-self.x_length/2,-self.y_length/2)
-        right_up_corner = (-self.x_length/2,self.y_length/2)
-        for i in range(self.x_length):
-            x = left_down_corner[0]
-            y = left_down_corner[1]+i
-            self.bouncing_places.add((x,y))
-            self.bouncing_places.add((x+self.x_length,y))
 
-        right_up_corner = (-self.x_length / 2, self.y_length / 2)
-        for i in range(self.y_length):
-            x = right_up_corner[0]+i
-            y = right_up_corner[1]
+        left = self.x_length//2-self.gate_size//2
+        right = self.x_length//2+self.gate_size//2
+        self.grid[0,:,8]=1
+        self.grid[-1,:,8]=1
 
-            if abs(x)>=self.gate_size/2:
-                self.bouncing_places.add((x,y))
-                self.bouncing_places.add((x,y-self.y_length))
+        self.grid[:,0,8]=1
+        self.grid[:,-1,8]=1
+
+        self.grid[[1,-2],:left+1,8]=1
+        self.grid[[1,-2],right:,8]=1
 
 
 
@@ -104,5 +102,9 @@ class PaperSoccerEnv:
         if self.cur_pos in self.bouncing_places:
             pass
 
+
+if __name__ == "__main__":
+    env = PaperSoccerEnv(x_length=8,y_length=10,gate_size=2)
+    env._grid_overview()
 
 
