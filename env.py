@@ -165,6 +165,108 @@ class PaperSoccerEnv:
         return self.grid.copy(), rewards, end, self.current_player
 
 
+class Agent:
+    def step(self, env):
+        pass
+
+
+class RandomAgent(Agent):
+
+    def step(self, env: PaperSoccerEnv):
+        y, x = env.cur_pos
+        possible_actions = np.where(env.grid[y, x, 0:8] == 0)[0]
+        action = np.random.choice(possible_actions)
+        return action
+
+
+class QTableAgent(Agent):
+    def step(self, env, q_table):
+        y, x = env.cur_pos
+        possible_actions = np.where(env.grid[y, x, 0:8] == 0)[0]
+        state = (y, x)
+        q_values = q_table.get(state, np.zeros(8))
+        masked_q_values = np.full(8, -np.inf)
+        masked_q_values[possible_actions] = q_values[possible_actions]
+        action = np.argmax(masked_q_values)
+        return action
+
+
+def simulate_game(agent_a: Agent, agent_b: Agent):
+    players = {-1: agent_a,
+               1: agent_b}
+    env = PaperSoccerEnv()
+    env.reset()
+    end = False
+    while not end:
+        player = env.current_player
+        action = players[player].step(env)
+        _, rewards, end, _ = env.step(action)
+
+    results = {
+        "winner": -1 if rewards[-1] > 0 else 1,
+        "rewards": rewards
+    }
+
+    return results
+
+
 if __name__ == "__main__":
-    env = PaperSoccerEnv(x_length=8, y_length=10, gate_size=2)
+    import pickle
+
+    env = PaperSoccerEnv(x_length=4, y_length=4, gate_size=2)
+    Q = {}
+    gamma = 0.99
+
+    eps = 0.05
+    alpha = 0.1
+    N_EPISODES = 1_000_000
+    EPS_START = 1.0
+    EPS_END = 0.05
+    DECAY = 0.5
+    for ep in range(N_EPISODES):
+        eps = max(EPS_END, EPS_START - (EPS_START - EPS_END) * ep / (DECAY * N_EPISODES))
+        grid, cur_player = env.reset()
+        prev_act = None
+        prev_s = None
+        end = False
+        # print("GAME START")
+        if ep % 100_000 == 0:
+            print(f"Episode {ep} / {N_EPISODES}")
+        while not end:
+            # print(cur_player)
+            y, x = env.cur_pos
+            q = None
+            if env.current_player == -1:
+                key = env.grid.tobytes() + bytes(env.cur_pos)
+                if key not in Q:
+                    val = np.zeros(8)
+                    val[env.grid[y, x, :8] == 1] = -np.inf
+                    Q[key] = val
+
+                q = Q[key]
+                if prev_s is not None:
+                    prev_s[prev_act] += alpha * (gamma * q.max() - prev_s[prev_act])
+                prev_act = np.random.choice(np.where(np.isfinite(q))[0]) if np.random.uniform() < eps else np.argmax(q)
+                prev_s = q
+                act = prev_act
+
+            else:
+                act = np.random.choice(np.where(env.grid[y, x, :8] == 0)[0])
+            _, rewards, end, cur_player = env.step(act)
+
+        # print("GAME END")
+        if prev_s is not None:
+            prev_s[prev_act] += alpha * (rewards[-1] - prev_s[prev_act])
+
+    with open("q_table_4x4x2.pkl", "wb") as f:
+
+        pickle.dump({
+            "q_table": Q,
+            "gamma": gamma,
+            "eps": eps,
+            "alpha": alpha,
+            "episodes": N_EPISODES,
+            "player": -1
+        }, f, protocol=pickle.HIGHEST_PROTOCOL)
+
     env.grid_overview()
