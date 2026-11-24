@@ -5,6 +5,5 @@ set -euo pipefail
 python3 -m venv "$HOME/venvs/paper-soccer"
 source "$HOME/venvs/paper-soccer/bin/activate"
 pip install --upgrade pip
-pip install -r requirements.txt
-pip install -e .
+pip install -e ".[dev]"
 python -c "import paper_soccer, numpy; print('OK, numpy', numpy.__version__)"
