@@ -1,7 +1,0 @@
-__pycache__/
-*.pyc
-results/
-slurm_logs/
-*.pkl
-.pytest_cache/
-.venv/

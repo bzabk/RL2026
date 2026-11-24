@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Użycie (zwykle przez submit.sh):  sbatch scripts/slurm/train.sbatch <algo> <board> <seed> [max_env_steps]
+# Użycie (zwykle przez submit.sh):  sbatch cluster/eden/train.sbatch <algo> <board> <seed> [max_env_steps]
 #
 # ZMIEŃ: --account (nazwa Waszej grupy na Edenie). Partycja z tutoriala Edena: student.
 # Tabular/Linear Q to czysty CPU -> gpu:0. Dla Double DQN / Dyna zmień na --gres=gpu:1.

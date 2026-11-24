@@ -1,7 +1,0 @@
-numpy
-pytest
-# dodamy przy Double DQN / PPO / A2C (wersję torch dopasuj do CUDA na Edenie):
-# torch
-# gymnasium
-# stable-baselines3
-# sb3-contrib
